@@ -3,11 +3,11 @@ install:
 		cargo build -j 1
 
 build:
-	docker build -t vg_search_actix_v2 .
+	docker build -t vg_search_actix_v6 .
 
 rundocker:
-	# docker run -it --rm -p 8080:8080 vg_search_actix_v2
-	# docker run -dp 8080:8080 vg_search_actix_v2
+	# docker run -it --rm -p 8080:8080 vg_search_actix_v6
+	# docker run -dp 8080:8080 vg_search_actix_v6
 
 
 format:
