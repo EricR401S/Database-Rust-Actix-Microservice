@@ -72,8 +72,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     for game in game_search {
         println!("\nGame: {:?}", game);
     }
-
+    
+    println!("\n\n\n");
     find_game_for_user(&typed_collection, "Final Fantasy VII");
+
+    println!("\n\n\n Test is complete, database functional.");
+
 
     Ok(())
 }
