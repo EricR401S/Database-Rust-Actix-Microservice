@@ -21,7 +21,7 @@ At the link, add a "/find_game/" with the name after the final slash, like "Supe
 
         Try this queried search in honor of Akira Toriyama:
 
-        https://pf8igq3ghg.us-east-1.awsapprunner.com/find_game/Dragon%20Ball:%20XenoVerse
+https://pf8igq3ghg.us-east-1.awsapprunner.com/find_game/Dragon%20Ball:%20XenoVerse
 
         Our recently departed Akira Toriyama (Creator of Dragon Ball and Designer for Dragon Quest) is hopefully blasting Kamehamehas in heaven after making our childhoods and adulthoods fun for so many years. As they say, put one hand in the sky for the spirit bomb to get a little brighter and bigger for the good man.
 
