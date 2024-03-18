@@ -1,42 +1,46 @@
 # Game Sales Query : Rust Polo DB Actix - MP5
 
 ## Description
-In this project, we containerize an Rust Actix/Axum web application, which generates random numbers according to the amount of digits that a user wants. I also managed to deploy it to AWS Apprunner, making the microservice accessible via the cloud, versus a local level.
+In this project, we containerize an Actix web application that allows the user to query a game's sales data, from a PoloDB database, by providing said game's name. The original data comes from this [Kaggle repository] (https://www.kaggle.com/datasets/gregorut/videogamesales) - (Thanks Gregorut!!!). This app's docker image is then deployed to AWS Elastic Container Registry (ECR), where its image is then deployed via AWS Apprunner, generating a link for public use.
 
 [Click Here for this Project's Demo Video!!!](https://www.youtube.com/watch?v=b7JuXXEUnbU)
 
-## Why a lottery number generator?
+## Why opt for a game search query and polo db?
 
-One of the trademark conversation pieces for the elderly community in Puerto Rico actually revolves around playing the lotto games, known as "Pega 3", "Pega 4", and "Lotería Electrónica". I would often see them strike new friendships and conversations about what number combination looks pretty, how it wouldn't hurt to have an extra 200 dollars, and how they would be happy with even with 10,000 dollars, not even a full 100K. I thought it would be nice if I had a number for them for the next time in which I see them. However, I don't want them to use the app if it means them losing the conversation piece. It should be an afterthought if and only if they needed a bit more numerical inspiration.
+Polo DB is an excellent NoSQL vector database. It's a cool tool that I wanted to learn how to use, and I wanted to do a game search query because...it's fun.  
 
 ## Usage
 
-Apprunner Actix Version Link : https://qpmrrrsni2.us-east-2.awsapprunner.com/
+AWS Apprunner Link : https://pf8igq3ghg.us-east-1.awsapprunner.com/
 
+At the link, add a "/find_game/" with the name after the final slash, like "Super Mario Bros.", so it would look like "link/find_game/Super Mario Bros." to see the sales data for this game. It's case sensitive, so it might take a few tries. Try "Tetris" and a few others from the Kaggle link above for a few runs. 
 
-![Alt text](image-25.png)
+![alt text](images/image-12.png)
 
-![Alt text](image-26.png)
+![alt text](images/image-13.png)
 
-At the link, add a "/digit" like "/4", to obtain your randomly generated number. Happy generating!!!!
+        Try this queried search in honor of Akira Toriyama:
 
-To use the run the code directly, opt for one of these two options.
+https://pf8igq3ghg.us-east-1.awsapprunner.com/find_game/Dragon%20Ball:%20XenoVerse
+
+Our recently departed Akira Toriyama (Creator of Dragon Ball and Designer for Dragon Quest) is hopefully blasting Kamehamehas in heaven after making our childhoods and adulthoods fun for so many years. As they say, put one hand in the sky for the spirit bomb to get a little brighter and bigger for the good man.
+
+## Quick Usage
+
+To use the demo run the code quickly and directly, opt for one of these two options.
 
 ```
 # local
-cd lotto_actix # or lotto_randomizer
-cargo build
-cargo run
-curl "localhost:8080/5" # 3000 for axum
+make local-run
+curl "localhost:8080/find_game/Tetris" # Or any game you want, case sensitive
 
 # docker
-make build
-make rundocker
-curl "localhost:8080/5" # 3000 for axum
+make local-docker-run
+curl "localhost:8080/find_game/Mega Man Legends" # Hard to choose, too many good choices
 
 ```
 
-## Prerequisites
+## Pre-requisites
 For those not using the AWS Cloud 9 environment, the required setup will be installing the following:
 
 * AWS cli (the most recent version)
@@ -45,11 +49,11 @@ For those not using the AWS Cloud 9 environment, the required setup will be inst
 
     * For the IAM user, I opted for this combination of permissions. The codedeploy ones are likely not necessary, but I didn't test that case.
 
-    ![Alt text](image-3.png)
+    ![alt text](images/image-3.png)
 
     * For the AWS Cloud 9 role attached to the instance, I chose these permissions.
 
-    ![Alt text](image-2.png)
+    ![alt text](images/image-2.png)
 
 ## Setup Instructions
 
@@ -58,145 +62,202 @@ For those not using the AWS Cloud 9 environment, the required setup will be inst
 $ cargo new your_project
 $ cd your_project
 ```
-2. Specify your logic in the lib.rs and the main.rs. Here is a specific look at the web framework : axum.
+
+2. I split the logic of the database creation and the app deployment to two different cargo projects. I hosted a csv in AWS S3 and made it public for use in my script. your logic in the lib.rs and the main.rs. Here is the logic for the database creation, its output which included some small tests, and my s3 creation. To try making the database, use ```make database-create```.
+```
+use polodb_core::{Database, Collection};
+use polodb_core::bson::{Document, doc};
+use std::error::Error;
+use csv::ReaderBuilder;
+
+// ellided code (...) to focus on the database creation 
+
+fn main() -> Result<(), Box<dyn Error>> {
+    // Create a database instance
+    // let db = Database::open_memory()?; // to open in memory only
+    let db = Database::open_file("vgtest-polo.db").unwrap();
+
+    // Create a collection named "games"
+    let typed_collection = db.collection::<Document>("games");
+
+    // Read CSV file from a URL (you might need to use a library like reqwest to fetch the CSV)
+    let csv_url = "https://vgexo.s3.us-west-1.amazonaws.com/vgsales.csv";
+    let response = reqwest::blocking::get(csv_url)?;
+    let csv_data = response.text()?;
+
+    // Create a CSV reader
+    let mut csv_reader = ReaderBuilder::new().from_reader(csv_data.as_bytes());
+
+    // Iterate over each CSV record and insert it into the collection
+    for result in csv_reader.records() {
+        let record = result?;
+
+        // Assuming your CSV has columns "title" and "author", adapt this to match your CSV structure
+        let doc = doc! {
+            "rank": &record[0], // Adjust the index based on your CSV structure
+            "name": &record[1], // Adjust the index based on your CSV structure
+            "platform": &record[2], // Adjust the index based on your CSV structure
+            "year": &record[3], // Adjust the index based on your CSV structure
+            "genre": &record[4], // Adjust the index based on your CSV structure
+            "publisher": &record[5], // Adjust the index based on your CSV structure
+            "na_sales": &record[6], // Adjust the index based on your CSV structure
+            "eu_sales": &record[7], // Adjust the index based on your CSV structure
+            "jp_sales": &record[8], // Adjust the index based on your CSV structure
+            "other_sales": &record[9], // Adjust the index based on your CSV structure
+            "global_sales": &record[10], // Adjust the index based on your CSV structure
+        };
+
+        // Insert the document into the collection
+        typed_collection.insert_one(doc)?;
+    }
+
+    let game_search = typed_collection.find(doc! {
+        "name": "Pokemon Gold/Pokemon Silver"
+    })?;
+    println!("\n\n\n");
+    println!("Pokemon Gold/Pokemon Silver");
+    for game in game_search {
+        println!("\nGame: {:?}", game);
+    }   
+
+    println!("\n\n\n");
+    find_game_for_user(&typed_collection, "Final Fantasy VII");
+    println!("\n\n\n Test is complete, database functional.");
+
+    Ok(())
+}
+```
+S3 - Making Objects Public with ACL
+![alt text](images/image-0.png)
+![alt text](images/image.png)
+
+The Output for This Step:
+![alt text](images/image-1.png)
+
+3. For the logic of hosting the app, I sent the database, generated by the prior step, to S3 and made it public, getting a link for public use. Then I chose Actix for the main web framework, where I download the database and let the user query data. I curled the query in a joint terminal session to show the output.
+```
+# local
+make local-run # cd game_search_web_app, cargo build, cargo run
+curl "localhost:8080/find_game/Tetris" # Or any game you want, case sensitive
+```
+
 ```
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
-use rand::Rng;
+use polodb_core::{Database, Collection};
+use polodb_core::bson::{Document, doc};
+use std::sync::Arc;
 
-fn generate_random_number(digits: usize) -> u32 {
-    let mut rng = rand::thread_rng();
-    let min_value = 10u32.pow(digits as u32 - 1);
-    let max_value = 10u32.pow(digits as u32) - 1;
-    rng.gen_range(min_value..=max_value)
+// elided code to focus on game search and its handler
+
+// Define your function to find a game for a user
+fn find_game_for_user(collection: &Collection<Document>, game_name: &str) -> Option<Document> {
+    let query = doc! {
+        "name": game_name,
+    };
+
+    collection.find_one(query).unwrap()
 }
 
-async fn index() -> impl Responder {
-    HttpResponse::Ok().body("Welcome to the Random Number Generator! To generate a random number, add the desired number of digits to the URL, e.g., /5 \n\n\n
-    Bienvenidos al generador aleatorio de numeros, para inspirar sus opciones de Pega 3 , Pega 4"
-    )
-    # I ellided the rest of the text for length
-}
+// Define a handler function for your endpoint
+async fn find_game_handler(data: web::Data<Arc<Collection<Document>>>, game_name: web::Path<String>) -> impl Responder {
+    // Call your function to find the game
+    match find_game_for_user(&data.as_ref(), &game_name) {
+        Some(result) => {
+            // Convert the JSON result to a newline-separated string
+            let result_string = serde_json::to_string_pretty(&result).unwrap_or_else(|_| String::from("Failed to serialize result"));
+            let result_string_with_newlines = result_string.replace(", ", ",\n");
 
-async fn random_number_handler(info: web::Path<(usize,)>) -> impl Responder {
-    let digits = info.into_inner().0;
-    let random_number = generate_random_number(digits);
-    HttpResponse::Ok().body(format!(
-        "Random number with {} digits / Numero Aleatorio de {} digitos : {} \n",
-        digits, digits, random_number
-    ))
-}
-
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
-        App::new()
-            .service(web::resource("/").route(web::get().to(index)))
-            .service(web::resource("/{digits}").route(web::get().to(random_number_handler)))
-    })
-    // .bind("127.0.0.1:8080")?
-    .bind("0.0.0.0:8080")?
-    .run()
-    .await
+            // Return the response with newline-separated content
+            HttpResponse::Ok().body(result_string_with_newlines)
+        },
+        None => HttpResponse::NotFound().body("Game not found"),
+    }
 }
 ```
-3. Build the project. Run the project in the terminal. 
-```
-cargo build
-cargo run
-```
-![alt text](image-27.png)
+Output of Cargo Run, curl the game Tetris
+![alt text](images/image-4.png)
 
-4. In a separate terminal session, run "curl 'localhost:3000'" and "curl 'localhost:3000/5'", to see if it works locally. Remember to adjust these commands to the unique functionality of your microservice. 
-```
-curl 'localhost:8080'
-curl 'localhost:8080/5'
-# port 3000 for axum version of project
-```
-
-![alt text](image-28.png)
-
-5. Terminate your original terminal session running the "cargo run" command with by pressing control+c. Now, Proceed to building your docker. The dockerfile used for the project is derived from the MLOPS [template](https://github.com/nogibjj/rust-mlops-template/blob/main/webdocker/Dockerfile) from [Noah Gift](https://noahgift.com/). 
-```
-docker build -t any_lowercase_name_for_your_image .
-```
-![alt text](image-29.png)
-
-#### Warning : Hours of Debugging Can be Avoided
-
-This docker file had to be modified because a mix of two errors were very prevalent. Building the docker image, the image does not appear in docker image ls or anything of the sort. When running the image, the GLIBC_2.XX errors come up. The fix was replacing the debian image with debian:testing. However, a new error "curl: (56) Recv failure: Connection reset by peer" crept up that I couldn't debug, and I discovered it was an issue with the port binding, so I changed the binding in the main.rs to ".bind("0.0.0.0:8080")?". That was the final fix.  
-
+4. With the code working, I proceeded to create a docker image. The magic here was adding the database file uploaded to S3 to the docker image with the ADD command, which downloads the file to the root of the docker image, and everything worked from there. 
 ```
 FROM rust:latest as builder
-ENV APP lotto_actix
+ENV APP game_search_web_app
 WORKDIR /usr/src/$APP
 COPY . .
 RUN cargo install --path .
 
-# use the testing debian
+# Use the testing debian
 FROM debian:testing
-# FROM debian:buster-slim
 RUN apt-get update && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /usr/local/cargo/bin/$APP /usr/local/bin/$APP
-#export this actix web service to port 8080 and 0.0.0.0
+
+# Copy the database file into the container
+ADD https://vgexo.s3.us-west-1.amazonaws.com/vgtest-polo.db /
+
+# Export this Actix web service to port 8080 and 0.0.0.0
 EXPOSE 8080
-CMD ["lotto_actix"]
+CMD ["game_search_web_app"]
 ```
 
-The axum friendly, docker file [template](https://gitlab.com/dukeaiml/duke-coursera-labs/rust-axum-greedy-coin-microservice/-/blob/main/Dockerfile?ref_type=heads) seen here is also a courtesy of Noah Gift. The command is the same. This method needed no special debugging or accomodations. You can already tell which of the two frameworks is my favorite.
-
-6. Run the docker image, and this will be a great opportunity for you to access the port as soon as it runs, as you will be essentially accessing the app from the image. Remember to test your curl commands. I will also include the stopping commands as comments, as you will need to stop the container after you're done testing. At this point, if you want, you can stop here. 
+5. After creating a docker image, I queried the game Tetris. Here are the commands to create the image and the outputs. Something weird that I noticed was that names with spaces in them did not yield the correct output via the curl method, but did so correctly when using the browser.
 ```
-docker run -dp 8080:8080 number_generator # 3000 for the axum version
-# docker ps # to get the container id
-# docker stop <your_container_id>
-```
-![alt text](image-31.png)
-
-7. (Optional) Deploy the app to Apprunner : Part 1. We have to configure an ECR repository in AWS. It's an incredibly straightforward process, and I recommend making a public ECR repository. As soon as it is done, look for the push commands for your repository. Then appropriately push the image to the repository. I put my sequence of commands as a "make deploy-aws".
-
-![alt text](image-32.png)
-
-![alt text](image-33.png)
-
-![alt text](image-34.png)
-
-```
-deploy-aws:
-	cargo build
-	aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 667719398048.dkr.ecr.us-east-2.amazonaws.com	
-	docker build -t lotto_actix .	
-	docker tag lotto_actix:latest 667719398048.dkr.ecr.us-east-2.amazonaws.com/lotto_actix:latest
-	docker push 667719398048.dkr.ecr.us-east-2.amazonaws.com/lotto_actix:latest
+# docker commands
+# make local-docker-run, commands within this make below, except curl
+cd game_search_web_app
+docker build -t vg_search_actix .
+docker run -dp 8080:8080 vg_search_actix # or docker run -it --rm -p 8080:8080 vg_search_actix
+curl "localhost:8080/find_game/Tekken" 
 ```
 
-8. Final Step :  Configure to run on AWS Apprunner. I recommend the options shown in the image, allowing you to choose your public repository and having Apprunner automatically re-deploy the service as new images are pushed to AWS. As for the role, I was able to leverage the regular "AppRunnerECRAccessRole", without any special permissions for this project. If you needed to automate the process, Github Actions and different types of roles or permissions might be necessary.  
+Docker Output:
 
-(DEFUNCT) Apprunner Axum Version Link:https://ja3mrdz8ra.us-east-2.awsapprunner.com/
+![alt text](images/image-5.png)
 
-![alt text](image-35.png)
+![alt text](images/image-6.png)
 
-For this image, I also changed the ports and adjusted the health checks, so that the deployment would not falsely fail quickly. If necessary, upgrade the virtual cpu for the service.
+7. (Optional) Deploy the app to Apprunner : Part 1. We have to configure an ECR repository in AWS. It's an incredibly straightforward process, and I recommend making a private ECR repository. As soon as it is done, look for the push commands for your repository. Then appropriately push the image to the repository. I put my sequence of commands as a "make deploy-aws".
 
-![alt text](image-36.png)
+![alt text](images/image-7.png)
+
+![alt text](images/image-8.png)
+
+```
+deploy-aws-from-root:
+	cd game_search_web_app &&\
+		cargo build --release &&\
+			docker build -t vg_search_aws .
+	aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 667719398048.dkr.ecr.us-east-1.amazonaws.com
+	docker tag vg_search_aws:latest 667719398048.dkr.ecr.us-east-1.amazonaws.com/vg_search_aws:latest
+	docker push 667719398048.dkr.ecr.us-east-1.amazonaws.com/vg_search_aws:latest
+```
+
+![alt text](images/image-9.png)
+
+8. Final Step :  Configure to run on AWS Apprunner. I recommend the options shown in the image, allowing you to choose your public repository and having Apprunner automatically re-deploy the service as new images are pushed to AWS. As for the role, I was able to leverage the regular "AppRunnerECRAccessRole", without any special permissions for this project. If you needed to automate the process, Github Actions and different types of roles or permissions might be necessary. Check your region quotas to make sure you have enough resources to run the service. 
+
+![alt text](images/image-10.png)
+
+Consider adjusting the ports and health checks, so that the deployment would not falsely fail quickly. If necessary, upgrade the virtual cpu for the service.
+
+![alt text](images/image-36.png)
 
 The link from your AppRunner, once deployed, is the link to your service, where the end user must add the required information (in my case, backslashes and digits) to access the functionality of the microservice. As for how my microservice appeared, look at my result section.
 
-![Alt text](image-24.png)
+![alt text](images/image-11.png)
 
 ## Result
 
-Assignment Requirement - Running the docker locally:
+Docker locally:
 
-![alt text](image-31.png)
+![alt text](images/image-5.png)
 
-Here is an example of my deployed app, the lottery number generator.
+Here is an example of my deployed app, the game sales query microservice.
 
-![Alt text](image-25.png)
+![alt text](images/image-12.png)
 
-![Alt text](image-26.png)
+![alt text](images/image-14.png)
 
 ## Licenses
 Creative Commons.
 
 ## Status
-This project is complete as of February 21, 2024.
+This project is complete as of March 2024.
