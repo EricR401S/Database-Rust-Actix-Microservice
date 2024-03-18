@@ -1,7 +1,7 @@
 # Game Sales Query : Rust Polo DB Actix - MP5
 
 ## Description
-In this project, we containerize an Actix web application that allows the user to query a game's sales data, from a PoloDB database, by providing said game's name. The original data comes from this [Kaggle repository] (https://www.kaggle.com/datasets/gregorut/videogamesales) - (Thanks Gregorut!!!). This app's docker image is then deployed to AWS Elastic Container Registry (ECR), where its image is then deployed via AWS Apprunner, generating a link for public use.
+In this project, we containerize an Actix web application that allows the user to query a game's sales data, from a PoloDB database, by providing said game's name. The original data comes from this [Kaggle repository](https://www.kaggle.com/datasets/gregorut/videogamesales) - (Thanks Gregorut!!!). This app's docker image is then deployed to AWS Elastic Container Registry (ECR), where its image is then deployed via AWS Apprunner, generating a link for public use.
 
 [Click Here for this Project's Demo Video!!!](https://www.youtube.com/watch?v=b7JuXXEUnbU)
 
