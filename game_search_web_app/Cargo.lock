@@ -467,6 +467,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "derive"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72e3ae26c830a573f2e231fc2475f71fce4705609097cb9523abfc4007caed0b"
+
+[[package]]
 name = "derive_more"
 version = "0.99.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -610,8 +616,11 @@ name = "game_search_web_app"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "derive",
  "polodb_core",
  "reqwest",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
