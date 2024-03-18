@@ -31,9 +31,9 @@ deploy-aws:
 
 deploy-aws-from-root:
 	cd game_search_web_app &&\
-	cargo build --release
+		cargo build --release &&\
+			docker build -t vg_search_aws .
 	aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 667719398048.dkr.ecr.us-east-1.amazonaws.com
-	docker build -t vg_search_aws .
 	docker tag vg_search_aws:latest 667719398048.dkr.ecr.us-east-1.amazonaws.com/vg_search_aws:latest
 	docker push 667719398048.dkr.ecr.us-east-1.amazonaws.com/vg_search_aws:latest
 

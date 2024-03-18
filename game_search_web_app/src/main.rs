@@ -21,7 +21,7 @@ async fn index() -> impl Responder {
     
     /find_game/{game_name} \n\n
 
-    Substitue {game_name} for any game. Try 'Tetris' to get you started!!!! \n\n\n
+    Substitute {game_name} for any game. Try 'Tetris' to get you started!!!! \n\n\n
 
     Thanks for trying this app out!!!!")
 }
