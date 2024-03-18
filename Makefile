@@ -1,8 +1,9 @@
 install:
-	cd game_search_web_app\
-		cargo clean &&\
-			cargo build &&\
-				cargo run 
+	cp make_vg_db/vgtest-polo.db game_search_web_app/ &&\
+		cd game_search_web_app &&\
+				cargo clean &&\
+					cargo build &&\
+						cargo run
 
 build:
 	docker build -t vg_search_actix .
@@ -45,7 +46,7 @@ local-run: install
 
 local-docker-run: 
 	cd game_search_web_app\
-		docker build -t vg_search_actix . &&\
-			docker run -it --rm -p 8080:8080 vg_search_actix
+		docker build -t vg_search_actix .
+		docker run -it --rm -p 8080:8080 vg_search_actix
 	
 all: format lint test run
