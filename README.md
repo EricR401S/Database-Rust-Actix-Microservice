@@ -19,9 +19,9 @@ At the link, add a "/find_game/" with the name after the final slash, like "Supe
 
 ![alt text](images/image-13.png)
 
-Try this queried search in honor of Akira Toriyama:
+        Try this queried search in honor of Akira Toriyama:
 
- https://pf8igq3ghg.us-east-1.awsapprunner.com/find_game/Dragon%20Ball:%20XenoVerse
+https://pf8igq3ghg.us-east-1.awsapprunner.com/find_game/Dragon%20Ball:%20XenoVerse
 
 Our recently departed Akira Toriyama (Creator of Dragon Ball and Designer for Dragon Quest) is hopefully blasting Kamehamehas in heaven after making our childhoods and adulthoods fun for so many years. As they say, put one hand in the sky for the spirit bomb to get a little brighter and bigger for the good man.
 
@@ -174,8 +174,8 @@ async fn find_game_handler(data: web::Data<Arc<Collection<Document>>>, game_name
     }
 }
 ```
-    Output of Cargo Run, curl the game Tetris
-    ![alt text](images/image-4.png)
+Output of Cargo Run, curl the game Tetris
+![alt text](images/image-4.png)
 
 4. With the code working, I proceeded to create a docker image. The magic here was adding the database file uploaded to S3 to the docker image with the ADD command, which downloads the file to the root of the docker image, and everything worked from there. 
 ```
@@ -208,11 +208,11 @@ docker run -dp 8080:8080 vg_search_actix # or docker run -it --rm -p 8080:8080 v
 curl "localhost:8080/find_game/Tekken" 
 ```
 
-    Docker Output:
+Docker Output:
 
-    ![alt text](images/image-5.png)
+![alt text](images/image-5.png)
 
-    ![alt text](images/image-6.png)
+![alt text](images/image-6.png)
 
 7. (Optional) Deploy the app to Apprunner : Part 1. We have to configure an ECR repository in AWS. It's an incredibly straightforward process, and I recommend making a private ECR repository. As soon as it is done, look for the push commands for your repository. Then appropriately push the image to the repository. I put my sequence of commands as a "make deploy-aws".
 
@@ -248,13 +248,13 @@ The link from your AppRunner, once deployed, is the link to your service, where 
 
 Docker locally:
 
-    ![alt text](images/image-5.png)
+![alt text](images/image-5.png)
 
 Here is an example of my deployed app, the game sales query microservice.
 
-    ![alt text](images/image-12.png)
+![alt text](images/image-12.png)
 
-    ![alt text](images/image-14.png)
+![alt text](images/image-14.png)
 
 ## Licenses
 Creative Commons.
